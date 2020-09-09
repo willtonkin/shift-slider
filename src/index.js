@@ -1,87 +1,89 @@
-!(function (d) {
-	var itemClassName = "photo";
-	(items = d.getElementsByClassName(itemClassName)),
-		(totalItems = items.length),
-		(slide = 0),
-		(moving = true);
+const states = {};
+const NAMESPACE = "ShiftSlider";
+const CLASS_PATTERN = new RegExp(`${NAMESPACE}-\\S*`, "g");
 
-	function setClasses() {
-		for (var i = 0; i < totalItems; i++) {
-			let diff = Math.abs(i - slide);
-			if (i < slide) {
-				items[i].className = itemClassName + " prev " + "prev-" + diff;
-			} else if (i === slide) {
-				items[i].className = itemClassName + " current";
-			} else {
-				items[i].className = itemClassName + " next " + "next-" + diff;
-			}
+function updateClasses(state) {
+	if (state.moving) return;
+
+	state.moving = true;
+
+	setTimeout(() => {
+		state.moving = false;
+	}, 500);
+
+	state.slideElements.forEach((element, i) => {
+		// remove all previous dynamic classes
+		element.className = element.className.replaceAll(CLASS_PATTERN, "");
+
+		const relativeIndex = Math.abs(i - state.slide);
+		if (i < state.slide) {
+			element.classList.add(
+				`${NAMESPACE}-prev`,
+				`${NAMESPACE}-prev-${relativeIndex}`
+			);
+		} else if (i > state.slide) {
+			element.classList.add(
+				`${NAMESPACE}-next`,
+				`${NAMESPACE}-next-${relativeIndex}`
+			);
+		} else {
+			element.classList.add(`${NAMESPACE}-current`);
 		}
-	}
+	});
+}
 
-	function setEventListeners() {
-		var next = d.getElementsByClassName("carousel-next")[0],
-			prev = d.getElementsByClassName("carousel-prev")[0];
+function moveNext(state) {
+	if (state.moving) return;
 
-		next.addEventListener("click", moveNext);
-		prev.addEventListener("click", movePrev);
-	}
+	const slideCount = state.slideElements.length;
 
-	function disableInteraction() {
-		moving = true;
+	state.slide++;
+	if (state.slide >= slideCount) state.slide = 0;
 
-		setTimeout(function () {
-			moving = false;
-		}, 500);
-	}
+	updateClasses(state);
+}
 
-	function moveCarouselTo(slide) {
-		// Check if carousel is moving, if not, allow interaction
-		if (!moving) {
-			// temporarily disable interactivity
-			disableInteraction();
+function movePrev(state) {
+	if (state.moving) return;
 
-			setClasses();
-		}
-	}
+	const slideCount = state.slideElements.length;
 
-	// Next navigation handler
-	function moveNext() {
-		// Check if moving
+	state.slide--;
+	if (state.slide < 0) state.slide = slideCount - 1;
 
-		if (!moving) {
-			// If it's the last slide, reset to 0, else +1
-			if (slide < totalItems - 1) {
-				slide++;
-			}
-			console.log("next");
-			// Move carousel to updated slide
-			moveCarouselTo(slide);
-		}
-	}
+	updateClasses(state);
+}
 
-	// Previous navigation handler
-	function movePrev() {
-		// Check if moving
-		if (!moving) {
-			// If it's the first slide, set as the last slide, else -1
-			if (slide > 0) {
-				slide--;
-			}
-			console.log("prev");
-			// Move carousel to updated slide
-			moveCarouselTo(slide);
-		}
-	}
+function initShiftSlider(id, element) {
+	const slideElements = Array.from(
+		element.querySelectorAll(`[data-${NAMESPACE}-item]`)
+	);
 
-	// Initialise carousel
-	function initCarousel() {
-		setClasses();
-		setEventListeners();
+	states[id] = {
+		element,
+		slideElements,
+		moving: false,
+		slide: 0,
+	};
 
-		// Set moving to false now that the carousel is ready
-		moving = false;
-	}
+	updateClasses(states[id]);
+	addEventListeners(states[id]);
+}
 
-	// make it rain
-	initCarousel();
-})(document);
+function addEventListeners(state) {
+	const element = state.element;
+	const next = element.querySelector(`[data-${NAMESPACE}-next]`);
+	const prev = element.querySelector(`[data-${NAMESPACE}-prev]`);
+
+	next.addEventListener("click", () => moveNext(state));
+	prev.addEventListener("click", () => movePrev(state));
+}
+
+// make it rain
+document &&
+	document.addEventListener("DOMContentLoaded", () => {
+		const sliderElms = document.querySelectorAll(`[data-${NAMESPACE}]`);
+
+		for (let i = 0; i < sliderElms.length; i++)
+			initShiftSlider(i, sliderElms[i]);
+	});
