@@ -4,7 +4,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "start": "parcel src/index.html",
-    "build": "parcel build src/index.html",
+    "build": "parcel build src/index.html -d ./docs",
     "format": "prettier --write ."
   },
   "dependencies": {},
