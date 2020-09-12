@@ -4,7 +4,7 @@
 
 ## Demo
 
-See some examples of it in action [here](./docs)
+See some examples of it in action [here](https://willtonkin.github.io/shift-slider/)
 
 ## How to use
 
